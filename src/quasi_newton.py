@@ -115,15 +115,16 @@ def l_bfgs(x, A, m=10, e=1e-6, max_iter=100, prefix='hic'):
         tmp = np.linalg.norm(grad)
         f1.write(str(tmp) + '\n')
         #print(x)
-        gfk = gradient(x, A)
+        #gfk = gradient(x, A)
         #alpha, fc, gc, new_fval, old_fval, new_slope = line_search(f=objective_function,myfprime=gradient,gfk=gfk,args=(A,),xk=x,pk=d,amax=1)
-        alpha = None
-        if alpha == None:
-            x = np.array(x) + min(lr*0.8, min_lr) * np.array(d)
-        else:
-            print("alpha:", alpha)
-            x = np.array(x) + alpha * np.array(d)
-        #lr = max(lr*0.8, min_lr)
+        #alpha = None
+        #if alpha == None:
+        #    x = np.array(x) + min(lr*0.8, min_lr) * np.array(d)
+        #else:
+        #    print("alpha:", alpha)
+        #    x = np.array(x) + alpha * np.array(d)
+        x = np.array(x) + lr * np.array(d)
+        lr = max(lr*0.8, min_lr)
         f2.write(str(lr) + '\n')
         
         loss = np.linalg.norm(grad)
