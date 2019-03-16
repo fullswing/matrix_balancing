@@ -138,6 +138,7 @@ def main():
         mat = np.genfromtxt(args.matrix, delimiter=args.delimiter, skip_header=args.skiprows)
     else:
         print("Error:Invalid file type", file=sys.stderr)
+        return
     trg = mat
     if args.preprocess:
         print("Preprocessing...")
