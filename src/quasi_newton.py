@@ -3,6 +3,8 @@ import numpy as np
 import copy, time
 import numpy as np
 import copy, time, sys
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import queue
 import argparse
