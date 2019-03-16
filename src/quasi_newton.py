@@ -45,7 +45,6 @@ def objective_function(x, A):
 
 def gradient(x, A):
     row, col = A.shape
-    #g = []
     g1 = np.zeros(row)
     g2 = np.zeros(col)
     scale_row = np.array(x[0:row])
@@ -54,40 +53,7 @@ def gradient(x, A):
     assert len(scale_col) == col
     hist = []
     g1 = A.dot(np.exp(scale_col)) * np.exp(scale_row) - 1
-    #print(g1)
     g2 = A.T.dot(np.exp(scale_row)) * np.exp(scale_col) - 1
-    """
-    g = np.zeros(row+col)
-    for i in range(row):
-        var = 0
-        for j in range(col):
-            var += A[i][j] * np.exp(scale_col[j])
-            if var == float('inf'):
-                print(A[i][j], np.exp(scale_col[j]), scale_col[j], j)
-            assert var != float('inf')
-            #hist.append(np.exp(scale_col[j]))
-        var *= np.exp(scale_row[i])
-        var -= 1
-        g[i] = var
-        print(g[i], g1[i])
-        #g.append(var)
-    #print(g[0:row])
-    for j in range(col):
-        var = 0
-        for i in range(row):
-            var += A[i][j] * np.exp(scale_row[i])
-            if var == float('inf'):
-                print(A[i][j], np.exp(scale_row[i]), scale_row[i], i)
-            assert var != float('inf')
-            #hist.append(np.exp(scale_row[i]))
-        var *= np.exp(scale_col[j])
-        var -= 1
-        #g.append(var)
-        g[row+j] = var
-    #print(x[0:row] - x[row:])
-    #print(np.linalg.norm(g[0:row] - g1))
-    #print(np.linalg.norm(g[row:] - g2))
-    """
     g = np.append(g1,g2)
     return np.array(g)
 
@@ -117,75 +83,40 @@ def l_bfgs(x, A, m=10, e=1e-6, max_iter=100, prefix='hic', truncation=True):
     k = 0
     s = deque()
     y = deque()
-    #vectorized_gradient = np.vectorize(gradient)
     grad = gradient(x, A)
-    #print(A)
-    #print(x)
-    #grad = vectorized_gradient(x, A)
-    row, col = A.shape
+    row, _ = A.shape
     assert len(grad) == len(A) + len(A[0])
     l = []
     norm_hist = []
     lr = 0.1
-    init = 0.1
     min_lr = 0.0001
-    min_loss = 1e+10
-    #f1 = open('../result/'+prefix+'_loss_with_annealing.txt', 'w')
-    #f2 = open('../result/'+prefix+'lr_history_for_hic.txt', 'w')
     while True:
         if truncation and np.linalg.norm(grad) < e:
             break
         elif not truncation and k > max_iter:
             break
         d = two_loop_recursion(grad, s, y)
-        tmp = np.linalg.norm(grad)
-        #f1.write(str(tmp) + '\n')
-        #print(x)
-        #gfk = gradient(x, A)
-        #alpha, fc, gc, new_fval, old_fval, new_slope = line_search(f=objective_function,myfprime=gradient,gfk=gfk,args=(A,),xk=x,pk=d,amax=1)
-        #alpha = None
-        #if alpha == None:
-        #    x = np.array(x) + min(lr*0.8, min_lr) * np.array(d)
-        #else:
-        #    print("alpha:", alpha)
-        #    x = np.array(x) + alpha * np.array(d)
         x = np.array(x) + lr * np.array(d)
         lr = max(lr*0.8, min_lr)
-        #f2.write(str(lr) + '\n')
-        
         loss = np.linalg.norm(grad)
-        """
-        if loss > 3 * min_loss:
-            lr = init
-        else:
-            min_loss = loss
-        """
         l.append(loss)
         norm_hist.append(np.linalg.norm(grad))
         if k % 5 == 0:
             print("step:{} norm:{}".format(k, np.linalg.norm(grad)))
 
         newGrad = gradient(x, A)
-        #newGrad = vectorized_gradient(x, A)
         if len(s) == m:
             s.popleft()
             y.popleft()
         s.append(d)
-        #print("y:", newGrad-grad)
         y.append(newGrad-grad)
         grad = newGrad
         k += 1
-    #print(np.diag(np.exp(x)).dot(A).dot(np.exp(x)))
-    #print("loss:", loss)
-    #f1.close()
-    #f2.close()
-    #print(np.exp(x))
     row_scale = x[0:row]
     col_scale = x[row:]    
     print("total steps:", k)
     result_mat = np.diag(np.exp(row_scale)).dot(A).dot(np.diag(np.exp(col_scale)))
     assert result_mat.shape == A.shape
-    #print(k)
     return x, l, result_mat
 
 def main():
