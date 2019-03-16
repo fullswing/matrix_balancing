@@ -2,9 +2,10 @@
 import numpy as np 
 import copy, time
 import numpy as np
-import copy, time
+import copy, time, sys
 import matplotlib.pyplot as plt
 import queue
+import argparse
 from numpy import genfromtxt
 from collections import deque
 from scipy.optimize import line_search
@@ -13,6 +14,7 @@ from sk_balancing import sinkhorn
 
 def preprocess(A):
     A = np.array(A)
+    print(A)
     n, m = A.shape
     if n == m:
         A += 1e-5 * np.eye(n)
@@ -95,7 +97,7 @@ def two_loop_recursion(grad, s, y):
         d = d + s[i] * (a[i] - b)
     return d
 
-def l_bfgs(x, A, m=10, e=1e-6, max_iter=100, prefix='hic'):
+def l_bfgs(x, A, m=10, e=1e-6, max_iter=100, prefix='hic', truncation=True):
     k = 0
     s = deque()
     y = deque()
@@ -108,12 +110,16 @@ def l_bfgs(x, A, m=10, e=1e-6, max_iter=100, prefix='hic'):
     init = 0.1
     min_lr = 0.0001
     min_loss = 1e+10
-    f1 = open('../result/'+prefix+'_loss_with_annealing.txt', 'w')
-    f2 = open('../result/'+prefix+'lr_history_for_hic.txt', 'w')
-    while np.linalg.norm(grad) > e and k <= max_iter:
+    #f1 = open('../result/'+prefix+'_loss_with_annealing.txt', 'w')
+    #f2 = open('../result/'+prefix+'lr_history_for_hic.txt', 'w')
+    while True:
+        if truncation and np.linalg.norm(grad) < e:
+            break
+        elif not truncation and k > max_iter:
+            break
         d = two_loop_recursion(grad, s, y)
         tmp = np.linalg.norm(grad)
-        f1.write(str(tmp) + '\n')
+        #f1.write(str(tmp) + '\n')
         #print(x)
         #gfk = gradient(x, A)
         #alpha, fc, gc, new_fval, old_fval, new_slope = line_search(f=objective_function,myfprime=gradient,gfk=gfk,args=(A,),xk=x,pk=d,amax=1)
@@ -125,7 +131,7 @@ def l_bfgs(x, A, m=10, e=1e-6, max_iter=100, prefix='hic'):
         #    x = np.array(x) + alpha * np.array(d)
         x = np.array(x) + lr * np.array(d)
         lr = max(lr*0.8, min_lr)
-        f2.write(str(lr) + '\n')
+        #f2.write(str(lr) + '\n')
         
         loss = np.linalg.norm(grad)
         """
@@ -150,40 +156,58 @@ def l_bfgs(x, A, m=10, e=1e-6, max_iter=100, prefix='hic'):
         k += 1
     #print(np.diag(np.exp(x)).dot(A).dot(np.exp(x)))
     #print("loss:", loss)
-    f1.close()
-    f2.close()
-    print(np.exp(x))
+    #f1.close()
+    #f2.close()
+    #print(np.exp(x))
     row_scale = x[0:row]
     col_scale = x[row:]    
-    print(np.diag(np.exp(row_scale)).dot(A).dot(np.diag(np.exp(col_scale)) - np.eye(row)))
+    print("total steps:", k)
+    result_mat = np.diag(np.exp(row_scale)).dot(A).dot(np.diag(np.exp(col_scale)))
+    assert result_mat.shape == A.shape
     #print(k)
-    return x, l
+    return x, l, result_mat
 
-if __name__ == '__main__':
-    m = np.loadtxt('../data/HIC_%s_1000000_%s.txt.gz' % ('k562', 'exp'), skiprows=1)
-    trg = copy.copy(m)
-    trg = preprocess(trg)
-    #trg = np.array([[1.2,0.4],[0.4, 1.2]], float)
-    #trg = np.array([[100,100002,3],[100002,1000,0.9],[3,0.9,5]], float)
-    #trg = np.array([[100,12,3],[15, 8, 9],[3,100,1]], float)
-    #trg = np.array([[10,1.2,3],[1.2,7,0.9],[3,0.9, 10]], float)
-    #trg = np.array([[10,1.2,3],[1.2,7,0.9]], float)
-    #trg = genfromtxt("../data/hessenberg20.txt", delimiter=',')
-    #trg = np.array([[1,2],[2,4]], float)
-    #trg += 1e-3
-    #trg = trg / 100
-
-    #trg = trg
-    #print(trg)
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("mat", help = "Target matrix data")
+    parser.add_argument("filetype", help="File type: hic or csv", type=str)
+    parser.add_argument("output", help="Graph between loss and step num", type=str)
+    parser.add_argument("balanced", help="Balanced matrix data", default=True, type=str)
+    parser.add_argument("--skiprows", help="Skip rows", default=0, type=int)
+    parser.add_argument("--delimiter", help="Delimiter", default="", type=str)
+    parser.add_argument("--max_iter", help="Max number of iteration for L-BFGS algorithm", default=80, type=int)
+    parser.add_argument("--truncation", help="Truncation is activated with this option", action='store_true')
+    parser.add_argument("--preprocess", help="Preprocess the target matrix with this option", action='store_true')
+    args = parser.parse_args()
+    if args.filetype == "hic":
+        mat = np.loadtxt(args.mat, skiprows=args.skiprows)
+    elif args.filetype == "csv":
+        mat = np.genfromtxt(args.mat, delimiter=args.delimiter, skip_header=args.skiprows)
+    else:
+        print("Error:Invalid file type", file=sys.stderr)
+    trg = mat
+    if args.preprocess:
+        print("Preprocessing...")
+        trg = preprocess(trg)
+        print("Done!")
+    if args.truncation:
+        print("t")
     n, m = trg.shape
     x = -np.ones(n+m)
-    #x = np.zeros(n)
-    #x = np.array([0, 0])
     start = time.time()
-    x, l = l_bfgs(x, trg,prefix='k562_hic')
+    x, l, result = l_bfgs(x, trg, max_iter=args.max_iter,truncation=args.truncation)
     end = time.time()
     print("elapsed time:{} sec.".format(end-start))
     plt.plot(l)
     plt.yscale('log')
-    plt.xticks(list(range(0,len(l), 5)))
-    plt.savefig("../k562_newton_loss.png")
+    plt.ylabel('loss')
+    plt.xlabel('steps')
+    plt.xticks(list(range(0,len(l), 10)))
+    plt.legend
+    plt.savefig(args.output)
+    print(result)
+    np.savetxt(args.balanced, result, delimiter=",")
+    plt.clf()
+
+if __name__ == '__main__':
+    main()
