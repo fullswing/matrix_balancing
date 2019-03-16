@@ -36,7 +36,6 @@ def preprocess(A):
     #A = sinkhorn(A)
     return A
 
-
 def objective_function(x, A):
     n, m = A.shape
     row_scale = np.array(x[0:n])
@@ -45,8 +44,9 @@ def objective_function(x, A):
     return np.exp(row_scale).dot(A).dot(np.exp(col_scale)) - sum(row_scale) - sum(col_scale)
 
 def gradient(x, A):
-    g = []
     row, col = A.shape
+    #g = []
+    g = np.zeros(row+col)
     scale_row = np.array(x[0:row])
     assert len(scale_row) == row
     scale_col = np.array(x[row:])
@@ -62,7 +62,8 @@ def gradient(x, A):
             #hist.append(np.exp(scale_col[j]))
         var *= np.exp(scale_row[i])
         var -= 1
-        g.append(var)
+        g[i] = var
+        #g.append(var)
     for j in range(col):
         var = 0
         for i in range(row):
@@ -73,7 +74,8 @@ def gradient(x, A):
             #hist.append(np.exp(scale_row[i]))
         var *= np.exp(scale_col[j])
         var -= 1
-        g.append(var)
+        #g.append(var)
+        g[row+j] = var
     #print(x[0:row] - x[row:])
     return np.array(g)
 
@@ -103,7 +105,11 @@ def l_bfgs(x, A, m=10, e=1e-6, max_iter=100, prefix='hic', truncation=True):
     k = 0
     s = deque()
     y = deque()
+    #vectorized_gradient = np.vectorize(gradient)
     grad = gradient(x, A)
+    #print(A)
+    #print(x)
+    #grad = vectorized_gradient(x, A)
     row, col = A.shape
     assert len(grad) == len(A) + len(A[0])
     l = []
@@ -148,6 +154,7 @@ def l_bfgs(x, A, m=10, e=1e-6, max_iter=100, prefix='hic', truncation=True):
             print("step:{} norm:{}".format(k, np.linalg.norm(grad)))
 
         newGrad = gradient(x, A)
+        #newGrad = vectorized_gradient(x, A)
         if len(s) == m:
             s.popleft()
             y.popleft()
