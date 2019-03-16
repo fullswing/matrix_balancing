@@ -17,8 +17,9 @@ Python3 implementation of matrix balancing using quasi-newton optimization, basi
 move to your workspace
 $ git clone https://github.com/fullswing/matrix_balancing.git
 $ cd ./matrix_barancing/
-$ mkdir result | cd src
-$ python quasi_newton.py
+$ mkdir result
+$ cd src
+$ python quasi_newton.py -h
 usage: quasi_newton.py [-h] [--skiprows SKIPROWS] [--delimiter DELIMITER]
                        [--max_iter MAX_ITER] [--truncation] [--preprocess]
                        matrix filetype output balanced
