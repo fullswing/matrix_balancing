@@ -169,7 +169,7 @@ def l_bfgs(x, A, m=10, e=1e-6, max_iter=100, prefix='hic', truncation=True):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("mat", help = "Target matrix data")
+    parser.add_argument("matrix", help = "Target matrix data")
     parser.add_argument("filetype", help="File type: hic or csv", type=str)
     parser.add_argument("output", help="Graph between loss and step num", type=str)
     parser.add_argument("balanced", help="Balanced matrix data", default=True, type=str)
@@ -180,9 +180,9 @@ def main():
     parser.add_argument("--preprocess", help="Preprocess the target matrix with this option", action='store_true')
     args = parser.parse_args()
     if args.filetype == "hic":
-        mat = np.loadtxt(args.mat, skiprows=args.skiprows)
+        mat = np.loadtxt(args.matrix, skiprows=args.skiprows)
     elif args.filetype == "csv":
-        mat = np.genfromtxt(args.mat, delimiter=args.delimiter, skip_header=args.skiprows)
+        mat = np.genfromtxt(args.matrix, delimiter=args.delimiter, skip_header=args.skiprows)
     else:
         print("Error:Invalid file type", file=sys.stderr)
     trg = mat
@@ -190,8 +190,6 @@ def main():
         print("Preprocessing...")
         trg = preprocess(trg)
         print("Done!")
-    if args.truncation:
-        print("t")
     n, m = trg.shape
     x = -np.ones(n+m)
     start = time.time()
@@ -205,7 +203,6 @@ def main():
     plt.xticks(list(range(0,len(l), 10)))
     plt.legend
     plt.savefig(args.output)
-    print(result)
     np.savetxt(args.balanced, result, delimiter=",")
     plt.clf()
 
