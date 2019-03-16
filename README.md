@@ -22,6 +22,7 @@ $ cd src
 $ python quasi_newton.py -h
 usage: quasi_newton.py [-h] [--skiprows SKIPROWS] [--delimiter DELIMITER]
                        [--max_iter MAX_ITER] [--truncation] [--preprocess]
+                       [--sinkhorn]
                        matrix filetype output balanced
 
 positional arguments:
@@ -38,6 +39,7 @@ optional arguments:
   --max_iter MAX_ITER   Max number of iteration for L-BFGS algorithm
   --truncation          Truncation is activated with this option
   --preprocess          Preprocess the target matrix with this option
+  --sinkhorn            Run sinkhorn once and then apply optimization
 $ python quasi_newton.py ../data/hessenberg20.txt csv ../result/hessenberg_loss_with_truncation.png ../result/balanced_hessenberg20.csv --truncation  --delimiter ,
 ```
 
