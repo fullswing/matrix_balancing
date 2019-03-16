@@ -12,8 +12,6 @@ from numpy import genfromtxt
 from collections import deque
 from scipy.optimize import line_search
 from sk_balancing import sinkhorn
-from numba.decorators import jit
-
 
 def preprocess(A):
     A = np.array(A)
@@ -46,7 +44,6 @@ def objective_function(x, A):
     #print(row_scale, col_scale)
     return np.exp(row_scale).dot(A).dot(np.exp(col_scale)) - sum(row_scale) - sum(col_scale)
 
-@jit
 def gradient(x, A):
     g = []
     row, col = A.shape
@@ -80,7 +77,6 @@ def gradient(x, A):
     #print(x[0:row] - x[row:])
     return np.array(g)
 
-@jit
 def two_loop_recursion(grad, s, y):
     n = len(s)
     d = -grad
