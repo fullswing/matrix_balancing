@@ -130,6 +130,7 @@ def main():
     parser.add_argument("--max_iter", help="Max number of iteration for L-BFGS algorithm", default=80, type=int)
     parser.add_argument("--truncation", help="Truncation is activated with this option", action='store_true')
     parser.add_argument("--preprocess", help="Preprocess the target matrix with this option", action='store_true')
+    parser.add_argument("--sinkhorn", help="Run sinkhorn once and then apply optimization", action='store_true')
     args = parser.parse_args()
     if args.filetype == "hic":
         mat = np.loadtxt(args.matrix, skiprows=args.skiprows)
@@ -141,6 +142,10 @@ def main():
     if args.preprocess:
         print("Preprocessing...")
         trg = preprocess(trg)
+        print("Done!")
+    if args.sinkhorn:
+        print("Running Sinkhorn once")
+        trg = sinkhorn(trg)
         print("Done!")
     n, m = trg.shape
     x = -np.ones(n+m)
