@@ -21,10 +21,10 @@ $ mkdir result | cd src
 $ python quasi_newton.py
 usage: quasi_newton.py [-h] [--skiprows SKIPROWS] [--delimiter DELIMITER]
                        [--max_iter MAX_ITER] [--truncation] [--preprocess]
-                       mat filetype output balanced
+                       matrix filetype output balanced
 
 positional arguments:
-  mat                   Target matrix data
+  matrix                Target matrix data
   filetype              File type: hic or csv
   output                Graph between loss and step num
   balanced              Balanced matrix data
