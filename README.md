@@ -38,7 +38,7 @@ optional arguments:
   --max_iter MAX_ITER   Max number of iteration for L-BFGS algorithm
   --truncation          Truncation is activated with this option
   --preprocess          Preprocess the target matrix with this option
-$ python quasi_newton.py ../data/hessenberg20.txt csv ../result/hessenberg_exp_loss_with_truncation.png ../result/balanced_hessenberg20.csv --truncation  --delimiter ,
+$ python quasi_newton.py ../data/hessenberg20.txt csv ../result/hessenberg_loss_with_truncation.png ../result/balanced_hessenberg20.csv --truncation  --delimiter ,
 ```
 
 ## Result
