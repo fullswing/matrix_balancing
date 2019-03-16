@@ -39,3 +39,9 @@ optional arguments:
   --preprocess          Preprocess the target matrix with this option
 $ python quasi_newton.py ../data/hessenberg20.txt csv ../result/hessenberg_exp_loss_with_truncation.png ../result/balanced_hessenberg20.csv --truncation  --delimiter ,
 ```
+
+## Result
+
+| Befor balancing | After balancing |
+|:-----------:|:------------:|
+| ![hessenberg](https://github.com/fullswing/matrix_balancing/blob/images/images/hessenberg20.png) | ![balanced hessenberg](https://github.com/fullswing/matrix_balancing/blob/images/images/balanced_hessenberg.png) |
