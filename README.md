@@ -42,6 +42,6 @@ $ python quasi_newton.py ../data/hessenberg20.txt csv ../result/hessenberg_exp_l
 
 ## Result
 
-| Befor balancing | After balancing |
+| Before balancing | After balancing |
 |:-----------:|:------------:|
 | ![hessenberg](https://github.com/fullswing/matrix_balancing/blob/images/images/hessenberg20.png) | ![balanced hessenberg](https://github.com/fullswing/matrix_balancing/blob/images/images/balanced_hessenberg.png) |
