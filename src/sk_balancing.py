@@ -3,10 +3,12 @@ import numpy as np
 import copy, time
 import numpy as np
 import copy, time
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import queue
 from collections import deque
-
+ 
 def sinkhorn(A):
     A = np.array(A)
     row, col = A.shape
