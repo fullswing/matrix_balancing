@@ -3,67 +3,54 @@ import numpy as np
 import copy, time
 import numpy as np
 import copy, time
-import matplotlib as mpl
-mpl.use('Agg')
-import matplotlib.pyplot as plt
-import queue
-from collections import deque
+import sys
+import argparse
+
  
 def sinkhorn(A):
     A = np.array(A)
     row, col = A.shape
-    for r in range(row):
-        var = sum(A[r])
-        #print(var)
-        for c in range(col):
-            A[r][c] = A[r][c] / var
-    for c in range(col):
-        var = sum(A[:,c])
-        for r in range(row):
-            A[r][c] = A[r][c] / var
+    scale_row = [1/sum(A[r]) for r in range(row)]
+    A = (A.T * scale_row).T
+    scale_col = [1/sum(A[:,c]) for c in range(col)]
+    A = A * scale_col
     return A
 
-if __name__ == '__main__':
-    m = np.loadtxt('../data/HIC_%s_1000000_%s.txt.gz' % ('k562', 'exp'), skiprows=1)
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("matrix", help = "Target matrix data")
+    parser.add_argument("filetype", help="File type: hic or csv", type=str)
+    parser.add_argument("--skiprows", help="Skip rows", default=0, type=int)
+    parser.add_argument("--delimiter", help="Delimiter", default="", type=str)
+    args = parser.parse_args()
+    if args.filetype == "hic":
+        mat = np.loadtxt(args.matrix, skiprows=args.skiprows)
+    elif args.filetype == "csv":
+        mat = np.genfromtxt(args.matrix, delimiter=args.delimiter, skip_header=args.skiprows)
+    else:
+        print("Error:Invalid file type", file=sys.stderr)
+        return
     th = 1e-6
     loss = 1
     step = 0
     l = []
-
-    trg = copy.copy(m)
-    #trg = np.array([[1,3,2],[3,4,5],[2,5,4]], np.float32)
-    #trg = np.array([[1,2,3],[2,0,0.9],[3,0.9,5]], float)
+    trg = copy.copy(mat)
     row, col = trg.shape
     s = time.time()
     while loss > th:
         loss = 0
-        for r in range(row):
-            var = sum(trg[r])
-            #print(var)
-            for c in range(col):
-                trg[r][c] = trg[r][c] / var
-        for c in range(col):
-            var = sum(trg[:,c])
-            for r in range(row):
-                trg[r][c] = trg[r][c] / var
+        trg = sinkhorn(trg)
+        step += 1
         for r in range(row):
             loss += np.abs(sum(trg[r]) - 1) ** 2
         for c in range(col):
             loss += np.abs(sum(trg[:,c]) - 1) ** 2
-        #print(loss)
-        l.append(loss)
-        #print(loss)
-        # calculate loss
-    #    loss = np.sum([np.abs(np.sum(1 - np.sum(r))) for r in trg])
-        #tmp = trg.T
-    #    loss += np.sum([np.abs(np.sum(1 - np.sum(c))) for c in tmp])
-        step += 1
         if step % 5 == 0:
-            #print(step)
-            plt.imshow(1/(trg+1e-3),cmap='RdBu')
-    #        plt.show()
-            print(loss)
-    #        print(trg)
+            print("step:{} loss:{}".format(step, loss))
     t = time.time()
     print(t-s)
-    print(trg)
+
+
+if __name__ == '__main__':
+    main()
+    
