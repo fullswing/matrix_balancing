@@ -46,12 +46,18 @@ def objective_function(x, A):
 def gradient(x, A):
     row, col = A.shape
     #g = []
-    g = np.zeros(row+col)
+    g1 = np.zeros(row)
+    g2 = np.zeros(col)
     scale_row = np.array(x[0:row])
     assert len(scale_row) == row
     scale_col = np.array(x[row:])
     assert len(scale_col) == col
     hist = []
+    g1 = A.dot(np.exp(scale_col)) * np.exp(scale_row) - 1
+    #print(g1)
+    g2 = A.T.dot(np.exp(scale_row)) * np.exp(scale_col) - 1
+    """
+    g = np.zeros(row+col)
     for i in range(row):
         var = 0
         for j in range(col):
@@ -63,7 +69,9 @@ def gradient(x, A):
         var *= np.exp(scale_row[i])
         var -= 1
         g[i] = var
+        print(g[i], g1[i])
         #g.append(var)
+    #print(g[0:row])
     for j in range(col):
         var = 0
         for i in range(row):
@@ -77,6 +85,10 @@ def gradient(x, A):
         #g.append(var)
         g[row+j] = var
     #print(x[0:row] - x[row:])
+    #print(np.linalg.norm(g[0:row] - g1))
+    #print(np.linalg.norm(g[row:] - g2))
+    """
+    g = np.append(g1,g2)
     return np.array(g)
 
 def two_loop_recursion(grad, s, y):
