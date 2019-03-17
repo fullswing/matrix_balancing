@@ -1,5 +1,5 @@
 # Quasi Newton
-import numpy as np 
+import numpy as np
 import copy, time
 import numpy as np
 import copy, time, sys
@@ -12,6 +12,7 @@ from numpy import genfromtxt
 from collections import deque
 from scipy.optimize import line_search
 from sk_balancing import sinkhorn
+from newton_balancing import hessian
 
 def preprocess(A):
     A = np.array(A)
@@ -73,13 +74,13 @@ def two_loop_recursion(grad, s, y):
 
     d = (s[n-1].dot(y[n-1]) / y[n-1].dot(y[n-1])) * d
     a = a[::-1]
-    
+
     for i in range(n):
         b = y[i].dot(d) / s[i].dot(y[i])
         d = d + s[i] * (a[i] - b)
     return d
 
-def l_bfgs(x, A, m=10, e=1e-6, max_iter=100, prefix='hic', truncation=True):
+def gradient_descent(x, A, m=10, e=1e-6, max_iter=100, prefix='hic', truncation=True, algorithm="lbfgs"):
     k = 0
     s = deque()
     y = deque()
@@ -88,16 +89,30 @@ def l_bfgs(x, A, m=10, e=1e-6, max_iter=100, prefix='hic', truncation=True):
     assert len(grad) == len(A) + len(A[0])
     l = []
     norm_hist = []
-    lr = 0.1
+    if algorithm == "lbfgs":
+        lr = 0.1
+    elif algorithm == "newton":
+        lr = 1.0
     min_lr = 0.0001
     while True:
         if truncation and np.linalg.norm(grad) < e:
             break
         elif not truncation and k > max_iter:
             break
-        d = two_loop_recursion(grad, s, y)
+        if algorithm == "lbfgs":
+            d = two_loop_recursion(grad, s, y)
+        elif algorithm == "newton":
+            H = hessian(x, A)
+            d = -H.dot(grad)
+        #print(d, sub_d)
+        #d = sub_d
+        if algorithm == "newton":
+            #print(lr)
+            #lr, _, _, _, _, _ = line_search(objective_function, gradient, x, pk=d, args=(A,), amax=50)
+            lr = 0.8
         x = np.array(x) + lr * np.array(d)
-        lr = max(lr*0.8, min_lr)
+        if algorithm == "lbfgs":
+            lr = max(lr*0.8, min_lr)
         loss = np.linalg.norm(grad)
         l.append(loss)
         norm_hist.append(np.linalg.norm(grad))
@@ -113,7 +128,7 @@ def l_bfgs(x, A, m=10, e=1e-6, max_iter=100, prefix='hic', truncation=True):
         grad = newGrad
         k += 1
     row_scale = x[0:row]
-    col_scale = x[row:]    
+    col_scale = x[row:]
     print("total steps:", k)
     result_mat = np.diag(np.exp(row_scale)).dot(A).dot(np.diag(np.exp(col_scale)))
     assert result_mat.shape == A.shape
@@ -125,6 +140,7 @@ def main():
     parser.add_argument("filetype", help="File type: hic or csv", type=str)
     parser.add_argument("output", help="Graph between loss and step num", type=str)
     parser.add_argument("balanced", help="Balanced matrix data", default=True, type=str)
+    parser.add_argument("--algorithm", help="Algorithm for gradient descent:lbfgs or newton", default="lbfgs", type=str)
     parser.add_argument("--skiprows", help="Skip rows", default=0, type=int)
     parser.add_argument("--delimiter", help="Delimiter", default="", type=str)
     parser.add_argument("--max_iter", help="Max number of iteration for L-BFGS algorithm", default=80, type=int)
@@ -132,6 +148,9 @@ def main():
     parser.add_argument("--preprocess", help="Preprocess the target matrix with this option", action='store_true')
     parser.add_argument("--sinkhorn", help="Run sinkhorn once and then apply optimization", action='store_true')
     args = parser.parse_args()
+    if args.algorithm != "lbfgs" and args.algorithm != "newton":
+        print("Error:Invalid optimization method", file=sys.stderr)
+        return
     if args.filetype == "hic":
         mat = np.loadtxt(args.matrix, skiprows=args.skiprows)
     elif args.filetype == "csv":
@@ -151,7 +170,7 @@ def main():
     n, m = trg.shape
     x = -np.ones(n+m)
     start = time.time()
-    x, l, result = l_bfgs(x, trg, max_iter=args.max_iter,truncation=args.truncation)
+    x, l, result = gradient_descent(x, trg, max_iter=args.max_iter,truncation=args.truncation, algorithm=args.algorithm)
     end = time.time()
     print("elapsed time:{} sec.".format(end-start))
     plt.plot(l)
