@@ -24,4 +24,5 @@ def hessian(x, A):
     tmp1 = np.concatenate((H1, H3),axis=0)
     tmp2 = np.concatenate((H2, H4), axis=0)
     H = np.concatenate((tmp1, tmp2), axis=1)
+    H = H + 1e-5 * np.eye(len(H))
     return H

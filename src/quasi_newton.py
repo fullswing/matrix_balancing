@@ -41,7 +41,6 @@ def objective_function(x, A):
     n, m = A.shape
     row_scale = np.array(x[0:n])
     col_scale = np.array(x[n:])
-    #print(row_scale, col_scale)
     return np.exp(row_scale).dot(A).dot(np.exp(col_scale)) - sum(row_scale) - sum(col_scale)
 
 def gradient(x, A):
@@ -52,7 +51,6 @@ def gradient(x, A):
     assert len(scale_row) == row
     scale_col = np.array(x[row:])
     assert len(scale_col) == col
-    hist = []
     g1 = A.dot(np.exp(scale_col)) * np.exp(scale_row) - 1
     g2 = A.T.dot(np.exp(scale_row)) * np.exp(scale_col) - 1
     g = np.append(g1,g2)
@@ -103,15 +101,14 @@ def gradient_descent(x, A, m=10, e=1e-6, max_iter=100, prefix='hic', truncation=
             d = two_loop_recursion(grad, s, y)
         elif algorithm == "newton":
             H = hessian(x, A)
-            d = -H.dot(grad)
-        #print(d, sub_d)
-        #d = sub_d
-        if algorithm == "newton":
-            #print(lr)
-            #lr, _, _, _, _, _ = line_search(objective_function, gradient, x, pk=d, args=(A,), amax=50)
-            lr = 0.8
+            d = -np.linalg.inv(H).dot(grad)
         x = np.array(x) + lr * np.array(d)
-        if algorithm == "lbfgs":
+        if algorithm == "newton":
+            #lr, _, _, _, _, _ = line_search(objective_function, gradient, x, pk=d, args=(A,), amax=50)
+            lr = 1.0
+            if lr != 1.0:
+                print(lr)
+        elif algorithm == "lbfgs":
             lr = max(lr*0.8, min_lr)
         loss = np.linalg.norm(grad)
         l.append(loss)
