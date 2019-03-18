@@ -78,12 +78,7 @@ def two_loop_recursion(grad, s, y):
         d = d + s[i] * (a[i] - b)
     return d
 
-<<<<<<< HEAD
-def gradient_descent(x, A, m=10, e=1e-6, max_iter=100, prefix='hic', truncation=True):
-    # Optimizing by L-BFGS algorithm
-=======
 def gradient_descent(x, A, m=10, e=1e-6, max_iter=100, prefix='hic', truncation=True, algorithm="lbfgs"):
->>>>>>> newton
     k = 0
     s = deque()
     y = deque()
@@ -172,11 +167,7 @@ def main():
     n, m = trg.shape
     x = -np.ones(n+m)
     start = time.time()
-<<<<<<< HEAD
-    x, l, result = gradient_descent(x, trg, max_iter=args.max_iter,truncation=args.truncation)
-=======
     x, l, result = gradient_descent(x, trg, max_iter=args.max_iter,truncation=args.truncation, algorithm=args.algorithm)
->>>>>>> newton
     end = time.time()
     print("elapsed time:{} sec.".format(end-start))
     plt.plot(l)
