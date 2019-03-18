@@ -1,5 +1,5 @@
 # Quasi Newton
-import numpy as np 
+import numpy as np
 import copy, time
 import numpy as np
 import copy, time, sys
@@ -12,6 +12,7 @@ from numpy import genfromtxt
 from collections import deque
 from scipy.optimize import line_search
 from sk_balancing import sinkhorn
+from newton_balancing import hessian
 
 def preprocess(A):
     A = np.array(A)
@@ -40,7 +41,6 @@ def objective_function(x, A):
     n, m = A.shape
     row_scale = np.array(x[0:n])
     col_scale = np.array(x[n:])
-    #print(row_scale, col_scale)
     return np.exp(row_scale).dot(A).dot(np.exp(col_scale)) - sum(row_scale) - sum(col_scale)
 
 def gradient(x, A):
@@ -51,7 +51,6 @@ def gradient(x, A):
     assert len(scale_row) == row
     scale_col = np.array(x[row:])
     assert len(scale_col) == col
-    hist = []
     g1 = A.dot(np.exp(scale_col)) * np.exp(scale_row) - 1
     g2 = A.T.dot(np.exp(scale_row)) * np.exp(scale_col) - 1
     g = np.append(g1,g2)
@@ -73,14 +72,18 @@ def two_loop_recursion(grad, s, y):
 
     d = (s[n-1].dot(y[n-1]) / y[n-1].dot(y[n-1])) * d
     a = a[::-1]
-    
+
     for i in range(n):
         b = y[i].dot(d) / s[i].dot(y[i])
         d = d + s[i] * (a[i] - b)
     return d
 
+<<<<<<< HEAD
 def gradient_descent(x, A, m=10, e=1e-6, max_iter=100, prefix='hic', truncation=True):
     # Optimizing by L-BFGS algorithm
+=======
+def gradient_descent(x, A, m=10, e=1e-6, max_iter=100, prefix='hic', truncation=True, algorithm="lbfgs"):
+>>>>>>> newton
     k = 0
     s = deque()
     y = deque()
@@ -89,16 +92,29 @@ def gradient_descent(x, A, m=10, e=1e-6, max_iter=100, prefix='hic', truncation=
     assert len(grad) == len(A) + len(A[0])
     l = []
     norm_hist = []
-    lr = 0.1
+    if algorithm == "lbfgs":
+        lr = 0.1
+    elif algorithm == "newton":
+        lr = 1.0
     min_lr = 0.0001
     while True:
         if truncation and np.linalg.norm(grad) < e:
             break
         elif not truncation and k > max_iter:
             break
-        d = two_loop_recursion(grad, s, y)
+        if algorithm == "lbfgs":
+            d = two_loop_recursion(grad, s, y)
+        elif algorithm == "newton":
+            H = hessian(x, A)
+            d = -np.linalg.inv(H).dot(grad)
         x = np.array(x) + lr * np.array(d)
-        lr = max(lr*0.8, min_lr)
+        if algorithm == "newton":
+            #lr, _, _, _, _, _ = line_search(objective_function, gradient, x, pk=d, args=(A,), amax=50)
+            lr = 1.0
+            if lr != 1.0:
+                print(lr)
+        elif algorithm == "lbfgs":
+            lr = max(lr*0.8, min_lr)
         loss = np.linalg.norm(grad)
         l.append(loss)
         norm_hist.append(np.linalg.norm(grad))
@@ -126,6 +142,7 @@ def main():
     parser.add_argument("filetype", help="File type: hic or csv", type=str)
     parser.add_argument("output", help="Graph between loss and step num", type=str)
     parser.add_argument("balanced", help="Balanced matrix data", default=True, type=str)
+    parser.add_argument("--algorithm", help="Algorithm for gradient descent:lbfgs or newton", default="lbfgs", type=str)
     parser.add_argument("--skiprows", help="Skip rows", default=0, type=int)
     parser.add_argument("--delimiter", help="Delimiter", default="", type=str)
     parser.add_argument("--max_iter", help="Max number of iteration for L-BFGS algorithm", default=80, type=int)
@@ -133,6 +150,9 @@ def main():
     parser.add_argument("--preprocess", help="Preprocess the target matrix with this option", action='store_true')
     parser.add_argument("--sinkhorn", help="Run sinkhorn once and then apply optimization", action='store_true')
     args = parser.parse_args()
+    if args.algorithm != "lbfgs" and args.algorithm != "newton":
+        print("Error:Invalid optimization method", file=sys.stderr)
+        return
     if args.filetype == "hic":
         mat = np.loadtxt(args.matrix, skiprows=args.skiprows)
     elif args.filetype == "csv":
@@ -152,7 +172,11 @@ def main():
     n, m = trg.shape
     x = -np.ones(n+m)
     start = time.time()
+<<<<<<< HEAD
     x, l, result = gradient_descent(x, trg, max_iter=args.max_iter,truncation=args.truncation)
+=======
+    x, l, result = gradient_descent(x, trg, max_iter=args.max_iter,truncation=args.truncation, algorithm=args.algorithm)
+>>>>>>> newton
     end = time.time()
     print("elapsed time:{} sec.".format(end-start))
     plt.plot(l)
