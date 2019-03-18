@@ -114,7 +114,7 @@ def gradient_descent(x, A, m=10, e=1e-6, max_iter=100, prefix='hic', truncation=
         grad = newGrad
         k += 1
     row_scale = x[0:row]
-    col_scale = x[row:]    
+    col_scale = x[row:]
     print("total steps:", k)
     result_mat = np.diag(np.exp(row_scale)).dot(A).dot(np.diag(np.exp(col_scale)))
     assert result_mat.shape == A.shape
