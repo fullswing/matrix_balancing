@@ -20,9 +20,9 @@ $ cd ./matrix_barancing/
 $ mkdir result
 $ cd src
 $ python quasi_newton.py -h
-usage: quasi_newton.py [-h] [--skiprows SKIPROWS] [--delimiter DELIMITER]
-                       [--max_iter MAX_ITER] [--truncation] [--preprocess]
-                       [--sinkhorn]
+usage: quasi_newton.py [-h] [--algorithm ALGORITHM] [--skiprows SKIPROWS]
+                       [--delimiter DELIMITER] [--max_iter MAX_ITER]
+                       [--truncation] [--preprocess] [--sinkhorn]
                        matrix filetype output balanced
 
 positional arguments:
@@ -33,6 +33,8 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
+  --algorithm ALGORITHM
+                        Algorithm for gradient descent:lbfgs or newton
   --skiprows SKIPROWS   Skip rows
   --delimiter DELIMITER
                         Delimiter
