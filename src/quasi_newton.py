@@ -43,7 +43,7 @@ def objective_function(x, A):
     col_scale = np.array(x[n:])
     return np.exp(row_scale).dot(A).dot(np.exp(col_scale)) - sum(row_scale) - sum(col_scale)
 
-def gradient(x, A):
+def barrier_gradient(x, A):
     row, col = A.shape
     g1 = np.zeros(row)
     g2 = np.zeros(col)
@@ -55,6 +55,11 @@ def gradient(x, A):
     g2 = A.T.dot(np.exp(scale_row)) * np.exp(scale_col) - 1
     g = np.append(g1,g2)
     return np.array(g)
+
+def capacity_gradient(x, A):
+    const_value = A.dot(np.exp(x))
+    grad = np.array([np.exp(x[i])/const_value[i] - x[i] for i in range(len(x))])
+    return x
 
 def two_loop_recursion(grad, s, y):
     n = len(s)
@@ -78,13 +83,17 @@ def two_loop_recursion(grad, s, y):
         d = d + s[i] * (a[i] - b)
     return d
 
-def gradient_descent(x, A, m=10, e=1e-6, max_iter=100, prefix='hic', truncation=True, algorithm="lbfgs"):
+def gradient_descent(x, A, m=10, e=1e-6, max_iter=100, prefix='hic', truncation=True, algorithm="lbfgs", objective='barrier'):
     k = 0
     s = deque()
     y = deque()
-    grad = gradient(x, A)
+    if objective == 'barrier':
+        grad = barrier_gradient(x, A)
+    elif objective == 'capacity':
+        grad = capacity_gradient(x, A)
+        #print(grad)
     row, _ = A.shape
-    assert len(grad) == len(A) + len(A[0])
+    #assert len(grad) == len(A) + len(A[0])
     l = []
     norm_hist = []
     if algorithm == "lbfgs":
@@ -115,8 +124,14 @@ def gradient_descent(x, A, m=10, e=1e-6, max_iter=100, prefix='hic', truncation=
         norm_hist.append(np.linalg.norm(grad))
         if k % 5 == 0:
             print("step:{} norm:{}".format(k, np.linalg.norm(grad)))
-
-        newGrad = gradient(x, A)
+        newGrad = None
+        #print(objective)
+        if objective == 'barrier':
+            newGrad = barrier_gradient(x, A)
+        elif objective == 'capacity':
+            #print("nira")
+            newGrad = capacity_gradient(x, A)
+        #assert newGrad != None
         if len(s) == m:
             s.popleft()
             y.popleft()
@@ -124,8 +139,12 @@ def gradient_descent(x, A, m=10, e=1e-6, max_iter=100, prefix='hic', truncation=
         y.append(newGrad-grad)
         grad = newGrad
         k += 1
-    row_scale = x[0:row]
-    col_scale = x[row:]
+    if objective == 'barrier':
+        row_scale = x[0:row]
+        col_scale = x[row:]
+    elif objective == 'capacity':
+        row_scale = x
+        col_scale = -np.log(np.exp(x).dot(A))
     print("total steps:", k)
     result_mat = np.diag(np.exp(row_scale)).dot(A).dot(np.diag(np.exp(col_scale)))
     assert result_mat.shape == A.shape
@@ -138,6 +157,7 @@ def main():
     parser.add_argument("output", help="Graph between loss and step num", type=str)
     parser.add_argument("balanced", help="Balanced matrix data", default=True, type=str)
     parser.add_argument("--algorithm", help="Algorithm for gradient descent:lbfgs or newton", default="lbfgs", type=str)
+    parser.add_argument("--objective", help="Objective function:barrier or capacity", default="barrier", type=str)
     parser.add_argument("--skiprows", help="Skip rows", default=0, type=int)
     parser.add_argument("--delimiter", help="Delimiter", default="", type=str)
     parser.add_argument("--max_iter", help="Max number of iteration for L-BFGS algorithm", default=80, type=int)
@@ -165,9 +185,12 @@ def main():
         trg = sinkhorn(trg)
         print("Done!")
     n, m = trg.shape
-    x = -np.ones(n+m)
+    if args.objective == 'barrier':
+        x = -np.ones(n+m)
+    elif args.objective == 'capacity':
+        x = -np.ones(n)
     start = time.time()
-    x, l, result = gradient_descent(x, trg, max_iter=args.max_iter,truncation=args.truncation, algorithm=args.algorithm)
+    x, l, result = gradient_descent(x, trg, max_iter=args.max_iter,truncation=args.truncation, algorithm=args.algorithm, objective=args.objective)
     end = time.time()
     print("elapsed time:{} sec.".format(end-start))
     plt.plot(l)
