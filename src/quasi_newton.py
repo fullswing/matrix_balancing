@@ -155,13 +155,13 @@ def gradient_descent(x, A, m=10, e=1e-6, max_iter=100, prefix='hic', truncation=
         col_scale = x[row:]
         result_mat = np.diag(np.exp(row_scale)).dot(A).dot(np.diag(np.exp(col_scale)))
     elif objective == 'capacity':
-        print(x)
+        #print(x)
         const_value = A.dot(np.exp(x))
-        print(const_value)
+        #print(const_value)
         result_mat = (A.dot(np.diag(np.exp(x))).T/const_value).T
     print("total steps:", k)
     
-    print(result_mat)
+    #print(result_mat)
     assert result_mat.shape == A.shape
     return x, l, result_mat
 
