@@ -58,8 +58,9 @@ def barrier_gradient(x, A):
 
 def capacity_gradient(x, A):
     const_value = A.dot(np.exp(x))
-    grad = np.array([np.exp(x[i])/const_value[i] - x[i] for i in range(len(x))])
-    return x
+    n, m = A.shape
+    grad = np.array([sum(A[:,j]/const_value)*np.exp(x[j])-1 for j in range(m)])
+    return grad
 
 def two_loop_recursion(grad, s, y):
     n = len(s)
@@ -117,9 +118,19 @@ def gradient_descent(x, A, m=10, e=1e-6, max_iter=100, prefix='hic', truncation=
             lr = 1.0
             if lr != 1.0:
                 print(lr)
-        elif algorithm == "lbfgs":
+        elif algorithm == 'lbfgs':
             lr = max(lr*0.8, min_lr)
-        loss = np.linalg.norm(grad)
+        if objective == 'barrier':
+            row_scale = x[0:row]
+            col_scale = x[row:]
+            loss = np.linalg.norm(np.diag(np.exp(row_scale)).dot(A).dot(np.exp(col_scale)) - 1)
+        elif objective == 'capacity':
+            row_scale = x
+            col_scale = -np.log(np.exp(x).T.dot(A))
+            loss = np.linalg.norm(grad)
+            #loss = np.linalg.norm(np.diag(np.exp(row_scale)).dot(A).dot(np.exp(col_scale)) - 1)
+        #loss = np.linalg.norm(grad)
+        
         l.append(loss)
         norm_hist.append(np.linalg.norm(grad))
         if k % 5 == 0:
@@ -142,11 +153,15 @@ def gradient_descent(x, A, m=10, e=1e-6, max_iter=100, prefix='hic', truncation=
     if objective == 'barrier':
         row_scale = x[0:row]
         col_scale = x[row:]
+        result_mat = np.diag(np.exp(row_scale)).dot(A).dot(np.diag(np.exp(col_scale)))
     elif objective == 'capacity':
-        row_scale = x
-        col_scale = -np.log(np.exp(x).dot(A))
+        print(x)
+        const_value = A.dot(np.exp(x))
+        print(const_value)
+        result_mat = (A.dot(np.diag(np.exp(x))).T/const_value).T
     print("total steps:", k)
-    result_mat = np.diag(np.exp(row_scale)).dot(A).dot(np.diag(np.exp(col_scale)))
+    
+    print(result_mat)
     assert result_mat.shape == A.shape
     return x, l, result_mat
 
