@@ -1,8 +1,10 @@
-# Matrix Balancing using quasi newton optimization
+# Matrix Balancing Library for square matrix
 
 ## Description
 
-Python3 implementation of matrix balancing using quasi-newton optimization, basically for square matrix
+Python3 implementation of several matrix balancing algorithms.
+
+L-BFGS algorithm with barrier function as obejective to optimize is the fastest.
 
 ## Prerequisite
 
