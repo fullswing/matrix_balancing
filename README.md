@@ -19,11 +19,12 @@ $ git clone https://github.com/fullswing/matrix_balancing.git
 $ cd ./matrix_barancing/
 $ mkdir result
 $ cd src
-$ python quasi_newton.py -h
-usage: quasi_newton.py [-h] [--algorithm ALGORITHM] [--skiprows SKIPROWS]
-                       [--delimiter DELIMITER] [--max_iter MAX_ITER]
-                       [--truncation] [--preprocess] [--sinkhorn]
-                       matrix filetype output balanced
+$ python example.py -h
+usage: example.py [-h] [--algorithm ALGORITHM] [--objective OBJECTIVE]
+                  [--skiprows SKIPROWS] [--delimiter DELIMITER]
+                  [--max_iter MAX_ITER] [--truncation] [--preprocess]
+                  [--sinkhorn]
+                  matrix filetype output balanced
 
 positional arguments:
   matrix                Target matrix data
@@ -35,6 +36,8 @@ optional arguments:
   -h, --help            show this help message and exit
   --algorithm ALGORITHM
                         Algorithm for gradient descent:lbfgs or newton
+  --objective OBJECTIVE
+                        Objective function:barrier or capacity
   --skiprows SKIPROWS   Skip rows
   --delimiter DELIMITER
                         Delimiter
@@ -42,7 +45,7 @@ optional arguments:
   --truncation          Truncation is activated with this option
   --preprocess          Preprocess the target matrix with this option
   --sinkhorn            Run sinkhorn once and then apply optimization
-$ python quasi_newton.py ../data/hessenberg20.txt csv ../result/hessenberg_loss_with_truncation.png ../result/balanced_hessenberg20.csv --truncation  --delimiter ,
+$ python example.py ../data/hessenberg20.txt csv ../result/barrier_hessenberg_loss_with_truncation.png ../result/barrier_hessenberg20.csv --algorithm lbfgs --truncation  --delimiter , --objective barrier
 ```
 
 ## Result
