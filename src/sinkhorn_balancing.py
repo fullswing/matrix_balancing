@@ -5,16 +5,7 @@ import numpy as np
 import copy, time
 import sys
 import argparse
-
- 
-def sinkhorn(A):
-    A = np.array(A)
-    row, col = A.shape
-    scale_row = [1/sum(A[r]) for r in range(row)]
-    A = (A.T * scale_row).T
-    scale_col = [1/sum(A[:,c]) for c in range(col)]
-    A = A * scale_col
-    return A
+from matrix_balancing import sinkhorn
 
 def main():
     parser = argparse.ArgumentParser()
